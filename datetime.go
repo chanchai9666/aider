@@ -397,3 +397,32 @@ func ToThaiMonth(month int) (string, error) {
 
 	return thaiMonths[month-1], nil
 }
+
+func DateTimeNow() string {
+	// ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
+	// location, _ := time.LoadLocation("Asia/Bangkok")
+	// if err != nil {
+	// 	fmt.Println("ไม่สามารถโหลดโซนเวลาได้:", err)
+
+	// }
+
+	// location := time.FixedZone("Asia/Bangkok", 7*60*60) // 7 ชั่วโมง
+	location := loadLocation()
+
+	// ใช้ Time Zone ที่กำหนด
+	currentTime := time.Now().In(location)
+	formattedTime := currentTime.Format("2006-01-02 15:04:05")
+	return formattedTime
+}
+
+// วันที่ปัจจุบัน แบบ time.Time
+func TimeTimeNow() time.Time {
+	dateFormat := "2006-01-02 15:04:05"
+	tt := DateTimeNow()
+	parsedTime, err := time.Parse(dateFormat, tt)
+	if err != nil {
+		return time.Time{}
+	}
+
+	return parsedTime
+}
