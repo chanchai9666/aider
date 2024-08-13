@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	rand2 "math/rand"
 	"os"
 
@@ -316,57 +317,109 @@ func RandomString(length int) string {
 	return string(b)
 }
 
+// เข้ารหัสข้อความ
 func EncryptData(plaintext, key string) (string, error) {
+	// keyProfile: เก็บค่าของ key (ไม่จำเป็นต้องมีการเปลี่ยนแปลง)
 	keyProfile := key
+	// newPlaintext: แปลงข้อความธรรมดา (plaintext) เป็น byte array
 	newPlaintext := []byte(plaintext)
+	// newKey: แปลง key เป็น byte array
 	newKey := []byte(keyProfile)
+
+	// สร้าง cipher block จาก key
 	block, err := aes.NewCipher(newKey)
 	if err != nil {
 		return "", err
 	}
 
+	// สร้างตัว encryptor แบบ AES-GCM จาก cipher block
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
 
+	// สร้างค่า nonce แบบสุ่ม
 	nonce := make([]byte, gcm.NonceSize())
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", err
 	}
 
+	// เข้ารหัสข้อความโดยใช้ AES-GCM พร้อมกับ nonce
 	ciphered := gcm.Seal(nonce, nonce, newPlaintext, nil)
+
+	// แปลงข้อมูลที่เข้ารหัสเป็น string base64
 	return base64.StdEncoding.EncodeToString(ciphered), nil
 }
 
+// ถอดรหัสข้อตวาม
 func DecryptData(cipheredStr, key string) (string, error) {
 	keyProfile := key
 	newKey := []byte(keyProfile)
+	// แปลงข้อมูลที่เข้ารหัสกลับมาเป็น byte array
 	ciphered, err := base64.StdEncoding.DecodeString(cipheredStr)
 	if err != nil {
 		return "", err
 	}
 
+	// สร้าง cipher block จาก key
 	block, err := aes.NewCipher(newKey)
 	if err != nil {
 		return "", err
 	}
 
+	// สร้างตัว decryptor แบบ AES-GCM จาก cipher block
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
 
+	// ตรวจสอบความยาวของข้อมูลที่เข้ารหัส
 	nonceSize := gcm.NonceSize()
 	if len(ciphered) < nonceSize {
 		return "", fmt.Errorf("ciphered too short")
 	}
 
+	// แยก nonce ออกจากข้อมูลที่เข้ารหัส
 	nonce, ciphered := ciphered[:nonceSize], ciphered[nonceSize:]
+
+	// แก้รหัสข้อความโดยใช้ AES-GCM พร้อมกับ nonce
 	plaintext, err := gcm.Open(nil, nonce, ciphered, nil)
 	if err != nil {
 		return "", err
 	}
 
+	// แปลงข้อความที่ถอดรหัสเป็น string
 	return string(plaintext), nil
+}
+
+// ตรวจสอบ ความถูกต้องของรหัส
+func IsEncrypt(key []byte, secure string) bool {
+	cipherText, err := base64.RawStdEncoding.DecodeString(secure)
+	if err != nil {
+		// return secure, err
+		log.Println("err cipherText", err)
+		return false
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		// return secure, err
+		log.Println("err block", err)
+		return false
+	}
+
+	if len(cipherText) < aes.BlockSize {
+		// return secure, err
+		log.Println("err cipherText < aes.BlockSize", err)
+		return false
+	}
+
+	iv := cipherText[:aes.BlockSize]
+	cipherText = cipherText[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(cipherText, cipherText)
+
+	// return string(cipherText), nil
+	return true
 }

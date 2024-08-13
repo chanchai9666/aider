@@ -132,3 +132,39 @@ func TestEncryptData(t *testing.T) {
 		})
 	}
 }
+
+func TestDecryptData(t *testing.T) {
+	type args struct {
+		cipheredStr string
+		key         string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "ถอดรหัส",
+			args: args{
+				cipheredStr: "DJ0Zry/KKy5JOwoaZd0P8T832lFyzE8J9EXbDMAvh9PxSroyLv57UyuP",
+				key:         "beee33dfe3640026d2da28b2c002cb9b",
+			},
+			wantErr: false,
+			want:    "Secret Message",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DecryptData(tt.args.cipheredStr, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DecryptData() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("DecryptData() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
