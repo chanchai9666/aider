@@ -1,8 +1,9 @@
 package aider
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -29,6 +30,7 @@ import (
 */
 
 func CreateMap[K comparable, V any, T any](items []T, keyFunc func(T) K, valueFunc func(T) V) map[K]V {
+
 	result := make(map[K]V)
 	for _, item := range items {
 		key := keyFunc(item)
@@ -266,12 +268,12 @@ func ToInt(value interface{}) int {
 	case string:
 		result, err := strconv.Atoi(v)
 		if err != nil {
-			fmt.Println("cannot convert %q to int: %v", v, err)
+			// fmt.Println("cannot convert %q to int: %v", v, err)
 			return 0
 		}
 		return result
 	default:
-		fmt.Println("cannot convert %v to int", value)
+		// fmt.Println("cannot convert %v to int", value)
 		return 0
 	}
 }
@@ -296,12 +298,12 @@ func ToFloat64(value interface{}) float64 {
 	case string:
 		result, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			fmt.Println("cannot convert %q to float64: %v", v, err)
+			// fmt.Println("cannot convert %q to float64: %v", v, err)
 			return 0
 		}
 		return result
 	default:
-		fmt.Println("cannot convert %v of type %s to float64", value, reflect.TypeOf(value))
+		// fmt.Println("cannot convert %v of type %s to float64", value, reflect.TypeOf(value))
 		return 0
 	}
 }
@@ -339,4 +341,28 @@ func InSlice[T comparable](value T, array []T) bool {
 
 	// fmt.Println(InSlice(Person{"Bob", 25}, personSlice))       // true
 	// fmt.Println(InSlice(Person{"Dave", 40}, personSlice))      // false
+}
+
+func DD(values ...interface{}) {
+	for k, v := range values {
+		fmt.Println("============================", k, "============================")
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err == nil {
+			fmt.Println(string(b))
+		}
+	}
+
+	fmt.Println("DD Print Exit")
+	os.Exit(0)
+}
+
+func DDD(v ...interface{}) (err error) {
+	for k, v := range v {
+		fmt.Println("============================", k, "============================")
+		b, err := json.MarshalIndent(v, "", "  ")
+		if err == nil {
+			fmt.Println(string(b))
+		}
+	}
+	return
 }
