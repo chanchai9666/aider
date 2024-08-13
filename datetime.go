@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	languageTh string = "th"
+	languageTh     string = "th"
+	dateLayout     string = "2006-01-02"          // รูปแบบของวันที่ใน Go
+	datetimeLayout string = "2006-01-02 15:04:05" //รูปแบบวันเวลาใน Go
 )
 
 // LoadLocation returns The time zone.
@@ -177,7 +179,7 @@ func getMonthThai(month time.Month) string {
 
 // AddDatetime add date time only format 2006-01-02 15:04:05
 func AddDatetime(datetime string, year, month, day, hour, min, sec int) string {
-	layout := "2006-01-02 15:04:05"
+	layout := datetimeLayout
 	dt, _ := time.Parse(layout, datetime)
 	if dt.IsZero() {
 		return ""
@@ -199,7 +201,7 @@ func AddDatetime(datetime string, year, month, day, hour, min, sec int) string {
 
 // ReduceDatetime reduce re date time only format 2006-01-02 15:04:05
 func ReDatetime(datetime string, year, month, day, hour, min, sec int) string {
-	layout := "2006-01-02 15:04:05"
+	layout := datetimeLayout
 	dt, _ := time.Parse(layout, datetime)
 	if dt.IsZero() {
 		return ""
@@ -347,7 +349,7 @@ func DaysBetween(a, b time.Time) int {
 }
 
 func Date(s string) time.Time {
-	d, _ := time.Parse("2006-01-02", s)
+	d, _ := time.Parse(dateLayout, s)
 	return d
 }
 
@@ -356,13 +358,13 @@ func InTimeSpan(start, end, check time.Time) bool {
 }
 
 func DateTime(s string) time.Time {
-	d, _ := time.Parse("2006-01-02 15:04:05", s)
+	d, _ := time.Parse(datetimeLayout, s)
 	return d
 }
 
 // นับวัน ระหว่างช่วงวันที่
 func CountDays(startDateStr, endDateStr string) (int, error) {
-	layout := "2006-01-02" // รูปแบบของวันที่ใน Go
+	layout := dateLayout // รูปแบบของวันที่ใน Go
 
 	// แปลงวันที่จาก string เป็น time.Time
 	startDate, err := time.Parse(layout, startDateStr)
@@ -398,6 +400,7 @@ func ToThaiMonth(month int) (string, error) {
 	return thaiMonths[month-1], nil
 }
 
+// วันเวลา ปัจจุบัน ประเทศไทย แบบ string
 func DateTimeNow() string {
 	// ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
 	// location, _ := time.LoadLocation("Asia/Bangkok")
@@ -411,13 +414,13 @@ func DateTimeNow() string {
 
 	// ใช้ Time Zone ที่กำหนด
 	currentTime := time.Now().In(location)
-	formattedTime := currentTime.Format("2006-01-02 15:04:05")
+	formattedTime := currentTime.Format(datetimeLayout)
 	return formattedTime
 }
 
-// วันที่ปัจจุบัน แบบ time.Time
+// วันที่ปัจจุบัน ประเทศไทย แบบ time.Time
 func TimeTimeNow() time.Time {
-	dateFormat := "2006-01-02 15:04:05"
+	dateFormat := datetimeLayout
 	tt := DateTimeNow()
 	parsedTime, err := time.Parse(dateFormat, tt)
 	if err != nil {
