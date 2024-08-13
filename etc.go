@@ -1,11 +1,17 @@
 package aider
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	rand2 "math/rand"
 	"os"
-	"strconv"
-	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ฟังก์ชันที่สร้าง map จาก slice ของ struct ใด ๆ โดยกำหนด key และ value ตามที่เลือก
@@ -226,88 +232,6 @@ func ToTripleNestedMap[K1 comparable, K2 comparable, K3 comparable, T any](items
 	*/
 }
 
-// เติม 0 ด้านหน้าตัวเลข
-func PadZeros(width int, number int) string {
-	numberStr := fmt.Sprintf("%d", number)
-	padding := width - len(numberStr)
-	if padding <= 0 {
-		return numberStr
-	}
-	return strings.Repeat("0", padding) + numberStr
-}
-
-// แปลงค่าเป็น string
-func ToString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		return fmt.Sprintf("%v", v)
-	case float32:
-		return strconv.FormatFloat(float64(v), 'f', -1, 32)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	default:
-		return fmt.Sprintf("%v", v)
-	}
-}
-
-// แปลงค่าเป็น int
-func ToInt(value interface{}) int {
-	switch v := value.(type) {
-	case int:
-		return v
-	case int8:
-		return int(v)
-	case int16:
-		return int(v)
-	case int32:
-		return int(v)
-	case int64:
-		return int(v)
-	case string:
-		result, err := strconv.Atoi(v)
-		if err != nil {
-			// fmt.Println("cannot convert %q to int: %v", v, err)
-			return 0
-		}
-		return result
-	default:
-		// fmt.Println("cannot convert %v to int", value)
-		return 0
-	}
-}
-
-// แปลงค่าเป็น float64
-func ToFloat64(value interface{}) float64 {
-	switch v := value.(type) {
-	case float32:
-		return float64(v)
-	case float64:
-		return v
-	case int:
-		return float64(v)
-	case int8:
-		return float64(v)
-	case int16:
-		return float64(v)
-	case int32:
-		return float64(v)
-	case int64:
-		return float64(v)
-	case string:
-		result, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			// fmt.Println("cannot convert %q to float64: %v", v, err)
-			return 0
-		}
-		return result
-	default:
-		// fmt.Println("cannot convert %v of type %s to float64", value, reflect.TypeOf(value))
-		return 0
-	}
-}
-
 // ตรวจสอบค่า ว่ามีใน Slice ไหม
 func InSlice[T comparable](value T, array []T) bool {
 	for _, item := range array {
@@ -345,7 +269,7 @@ func InSlice[T comparable](value T, array []T) bool {
 
 func DD(values ...interface{}) {
 	for k, v := range values {
-		fmt.Println("============================", k, "============================")
+		fmt.Println("==x0xx0xx0xx0xx0xx0xx0xx0xx0x==", k, "==x0xx0xx0xx0xx0xx0xx0xx0xx0x==")
 		b, err := json.MarshalIndent(v, "", "  ")
 		if err == nil {
 			fmt.Println(string(b))
@@ -358,11 +282,91 @@ func DD(values ...interface{}) {
 
 func DDD(v ...interface{}) (err error) {
 	for k, v := range v {
-		fmt.Println("============================", k, "============================")
+		fmt.Println("==x0xx0xx0xx0xx0xx0xx0xx0xx0x==", k, "==x0xx0xx0xx0xx0xx0xx0xx0xx0x==")
 		b, err := json.MarshalIndent(v, "", "  ")
 		if err == nil {
 			fmt.Println(string(b))
 		}
 	}
 	return
+}
+
+// HashPassword เข้ารหัสรหัสผ่านโดยใช้ bcrypt
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+// CheckPassword ตรวจสอบว่ารหัสผ่านตรงกับรหัสผ่านที่เข้ารหัส
+func CheckPassword(password, hashedPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
+}
+
+// สุ่ม string ตามจำนวนที่ต้องการ
+func RandomString(length int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand2.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func EncryptData(plaintext, key string) (string, error) {
+	keyProfile := key
+	newPlaintext := []byte(plaintext)
+	newKey := []byte(keyProfile)
+	block, err := aes.NewCipher(newKey)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	ciphered := gcm.Seal(nonce, nonce, newPlaintext, nil)
+	return base64.StdEncoding.EncodeToString(ciphered), nil
+}
+
+func DecryptData(cipheredStr, key string) (string, error) {
+	keyProfile := key
+	newKey := []byte(keyProfile)
+	ciphered, err := base64.StdEncoding.DecodeString(cipheredStr)
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher(newKey)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphered) < nonceSize {
+		return "", fmt.Errorf("ciphered too short")
+	}
+
+	nonce, ciphered := ciphered[:nonceSize], ciphered[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphered, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
 }
