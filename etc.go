@@ -459,3 +459,24 @@ func StructToMapInterface(data interface{}) map[string]interface{} {
 func ToByte(value string) []byte {
 	return []byte(value)
 }
+
+// ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น string มี key ที่กำหนด หรือไม่
+func IssetMapKyeString[T any](entities map[string]T, k string) bool {
+	if _, ok := entities[k]; ok {
+		return true //มี key
+	}
+	return false
+}
+
+// ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น int มี key ที่กำหนด หรือไม่
+func IssetMapKyeInt[T any](entities map[int]T, k int) bool {
+	if _, ok := entities[k]; ok {
+		return true //มี key
+	}
+	return false
+}
+
+// ตรวจสอบว่า index ที่กำหนด อยู่ภายในขอบเขตของ slice หรือ ไม่
+func IssetKeySlice[T any](entities []T, keyToCheck int) bool {
+	return keyToCheck >= 0 && keyToCheck < len(entities)
+}
