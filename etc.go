@@ -12,6 +12,7 @@ import (
 	rand2 "math/rand"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -479,4 +480,17 @@ func IssetMapKyeInt[T any](entities map[int]T, k int) bool {
 // ตรวจสอบว่า index ที่กำหนด อยู่ภายในขอบเขตของ slice หรือ ไม่
 func IssetKeySlice[T any](entities []T, keyToCheck int) bool {
 	return keyToCheck >= 0 && keyToCheck < len(entities)
+}
+
+// แปลง Slice ใดๆ เป็น string โดยสามารถกำหนดเครื่องหมายที่ใช้คั้นได้ (separator) เช่น , #
+func JoinSlice[T any](slice []T, separator string) string {
+	var sb strings.Builder
+	for i, val := range slice {
+		if i > 0 {
+			sb.WriteString(separator)
+		}
+		// ใช้ fmt.Sprint เพื่อแปลงค่าใดๆ เป็น string
+		sb.WriteString(fmt.Sprint(val))
+	}
+	return sb.String()
 }
