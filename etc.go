@@ -12,6 +12,7 @@ import (
 	rand2 "math/rand"
 	"os"
 	"reflect"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -318,6 +319,20 @@ func RandomString(length int) string {
 		b[i] = letters[rand2.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+// สุ่มตัวเลข
+func RandomInt(min, max int) int {
+	// กำหนด seed เพื่อให้ได้ผลลัพธ์ที่แตกต่างกันในแต่ละครั้งที่รันโปรแกรม
+	rand2.Seed(time.Now().UnixNano())
+	a := min
+	b := max
+	if min > max {
+		a = max
+		b = min
+	}
+	// สร้างตัวเลขสุ่มภายในช่วงที่กำหนด
+	return rand2.Intn(b-a+1) + a
 }
 
 // เข้ารหัสข้อความ

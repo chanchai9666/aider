@@ -8,7 +8,7 @@ import (
 )
 
 // ฟังก์ชันสำหรับสร้าง JWT Token รองรับ struct ใดๆ
-func GenerateJWT(jwtKey []byte, claimsStruct interface{}) (string, error) {
+func GenerateJWT[T any](jwtKey []byte, claimsStruct T) (string, error) {
 	// แปลง struct เป็น map เพื่อใช้เป็น claims
 	claimsMap := StructToMapInterface(claimsStruct)
 
