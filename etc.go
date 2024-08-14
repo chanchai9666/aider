@@ -11,6 +11,7 @@ import (
 	"log"
 	rand2 "math/rand"
 	"os"
+	"reflect"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -241,31 +242,33 @@ func InSlice[T comparable](value T, array []T) bool {
 		}
 	}
 	return false
-	//Ex.
-	// ตัวอย่างการใช้งานกับ slice ของ int
-	// intSlice := []int{1, 2, 3, 4, 5}
-	// fmt.Println(InSlice(3, intSlice)) // true
-	// fmt.Println(InSlice(6, intSlice)) // false
+	/*
+		Ex.
+		ตัวอย่างการใช้งานกับ slice ของ int
+		intSlice := []int{1, 2, 3, 4, 5}
+		fmt.Println(InSlice(3, intSlice)) // true
+		fmt.Println(InSlice(6, intSlice)) // false
 
-	// ตัวอย่างการใช้งานกับ slice ของ string
-	// stringSlice := []string{"apple", "banana", "cherry"}
-	// fmt.Println(InSlice("banana", stringSlice)) // true
-	// fmt.Println(InSlice("grape", stringSlice))  // false
+		ตัวอย่างการใช้งานกับ slice ของ string
+		stringSlice := []string{"apple", "banana", "cherry"}
+		fmt.Println(InSlice("banana", stringSlice)) // true
+		fmt.Println(InSlice("grape", stringSlice))  // false
 
-	// ตัวอย่างการใช้งานกับ slice ของ custom type
-	// type Person struct {
-	// 	Name string
-	// 	Age  int
-	// }
+		ตัวอย่างการใช้งานกับ slice ของ custom type
+		type Person struct {
+			Name string
+			Age  int
+		}
 
-	// personSlice := []Person{
-	// 	{"Alice", 30},
-	// 	{"Bob", 25},
-	// 	{"Charlie", 35},
-	// }
+		personSlice := []Person{
+			{"Alice", 30},
+			{"Bob", 25},
+			{"Charlie", 35},
+		}
 
-	// fmt.Println(InSlice(Person{"Bob", 25}, personSlice))       // true
-	// fmt.Println(InSlice(Person{"Dave", 40}, personSlice))      // false
+		fmt.Println(InSlice(Person{"Bob", 25}, personSlice))       // true
+		fmt.Println(InSlice(Person{"Dave", 40}, personSlice))      // false
+	*/
 }
 
 func DD(values ...interface{}) {
@@ -422,4 +425,22 @@ func IsEncrypt(key []byte, secure string) bool {
 
 	// return string(cipherText), nil
 	return true
+}
+
+// ฟังก์ชันแปลง struct ใดๆ ให้เป็น map[string]interface{}
+func StructToMapInterface(data interface{}) map[string]interface{} {
+	v := reflect.ValueOf(data)
+	t := reflect.TypeOf(data)
+
+	result := make(map[string]interface{})
+	for i := 0; i < v.NumField(); i++ {
+		field := t.Field(i)
+		result[field.Name] = v.Field(i).Interface()
+	}
+	return result
+}
+
+// แปลง String เป็น Byte
+func ToByte(value string) []byte {
+	return []byte(value)
 }
