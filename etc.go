@@ -3,6 +3,7 @@ package aider
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/md5"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -140,6 +142,7 @@ func CreateSlice[V any, T any](items []T, valueFunc func(T) V) []V {
 
 ผลลัพธ์จะเป็น map ที่มี key เป็นประเภทที่กำหนด (เช่น uint, string) และค่าของ map เป็น struct User ซึ่งสามารถใช้งานต่อไปได้ตามต้องการ
 */
+// สร้าง map[ใดๆ]struct จาก struct ใดๆ
 func ToMap[K comparable, T any](items []T, keyFunc func(T) K) map[K]T {
 	// สร้าง map ที่จะเก็บผลลัพธ์ โดยมี key เป็นประเภท K และ value เป็น struct ของ type T
 	result := make(map[K]T)
@@ -323,7 +326,7 @@ func RandomString(length int) string {
 }
 
 // สุ่มตัวเลข
-func RandomInt(min, max int) int {
+func RandomNumber(min, max int) int {
 	// กำหนด seed เพื่อให้ได้ผลลัพธ์ที่แตกต่างกันในแต่ละครั้งที่รันโปรแกรม
 	rand2.Seed(time.Now().UnixNano())
 	a := min
@@ -462,7 +465,7 @@ func ToByte(value string) []byte {
 }
 
 // ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น string มี key ที่กำหนด หรือไม่
-func IssetMapKyeString[T any](entities map[string]T, k string) bool {
+func IssetMapKyeString[T comparable](entities map[string]T, k string) bool {
 	if _, ok := entities[k]; ok {
 		return true //มี key
 	}
@@ -470,7 +473,7 @@ func IssetMapKyeString[T any](entities map[string]T, k string) bool {
 }
 
 // ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น int มี key ที่กำหนด หรือไม่
-func IssetMapKyeInt[T any](entities map[int]T, k int) bool {
+func IssetMapKyeInt[T comparable](entities map[int]T, k int) bool {
 	if _, ok := entities[k]; ok {
 		return true //มี key
 	}
@@ -493,4 +496,42 @@ func JoinSlice[T any](slice []T, separator string) string {
 		sb.WriteString(fmt.Sprint(val))
 	}
 	return sb.String()
+}
+
+// แปลง String เป็น []string โดยสามารถกำหนดเครื่องหมาย (separator) ที่ต้องการให้ตัดแบ่งได้ เช่น , #
+func SplitString(str, separator string) []string {
+	return strings.Split(str, separator)
+}
+
+// เข้ารหัส MF5
+func MD5(str string) string {
+	md5Hash := md5.New()
+	md5Hash.Write([]byte(str))
+	md5Sum := md5Hash.Sum(nil)
+
+	return fmt.Sprintf("%x", md5Sum)
+}
+func extractNumbers(input string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsDigit(r) {
+			return r
+		}
+		return -1
+	}, input)
+}
+
+// แปลง struct หรือ ค่า ใดๆเป็น MD5 (ใช้สำหรับสร้าง key)
+func GenRedisKey(v interface{}) string {
+	// ตรวจสอบว่า v เป็น pointer หรือไม่
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		// ถ้าเป็น pointer ให้ดึงค่าที่ pointer ชี้ไป
+		val = val.Elem()
+	}
+	// ดึงค่า string จาก v
+	valueStr := fmt.Sprintf("%v", val.Interface())
+
+	md5 := MD5(valueStr)
+	numbers := extractNumbers(md5)
+	return numbers
 }
