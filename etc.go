@@ -529,3 +529,8 @@ func GenRedisKey(v interface{}) string {
 	numbers := extractNumbers(md5)
 	return numbers
 }
+
+// ใช้เพื่อลบช่องว่าง (whitespace) เช่น ช่องว่าง, แท็บ, และบรรทัดใหม่จากทั้งสองขอบของสตริง
+func Trim(v string) string {
+	return strings.TrimSpace(v)
+}
