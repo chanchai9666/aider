@@ -8,9 +8,9 @@ import (
 )
 
 type JwtConfig struct {
-	ExpirationTime time.Time //เวลาหมดอายุของ JWT
-	Audience       string    //ผู้รับที่ JWT นี้ถูกออกให้ ใคร ?
-	Issuer         string    //ผู้สร้าง JWT นี้
+	ExpirationTime int64  //เวลาหมดอายุของ JWT (แบบ Unix)
+	Audience       string //ผู้รับที่ JWT นี้ถูกออกให้ ใคร ?
+	Issuer         string //ผู้สร้าง JWT นี้
 }
 
 // ฟังก์ชันสำหรับสร้าง JWT Token รองรับ struct ใดๆ
@@ -21,7 +21,7 @@ func GenerateJWT[T any](jwtKey []byte, conFig JwtConfig, claimsStruct T) (string
 	// expirationTime := time.Now().Add(15 * time.Minute).Unix()
 
 	// กำหนด IssuedAt, Expiration, Audience, และ Issuer
-	claimsMap["iat"] = TimeTimeNow()         //เวลาที่สร้าง
+	claimsMap["iat"] = TimeTimeNow().Unix()  //เวลาที่สร้าง
 	claimsMap["exp"] = conFig.ExpirationTime //เวลาที่หมดอายุ
 	claimsMap["aud"] = conFig.Audience       // ผู้รับที่ JWT นี้ถูกออกให้ ใคร ?
 	claimsMap["iss"] = conFig.Issuer         // ผู้สร้าง JWT นี้
