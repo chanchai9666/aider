@@ -13,6 +13,7 @@ import (
 	rand2 "math/rand"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -533,4 +534,118 @@ func GenRedisKey(v interface{}) string {
 // ใช้เพื่อลบช่องว่าง (whitespace) เช่น ช่องว่าง, แท็บ, และบรรทัดใหม่จากทั้งสองขอบของสตริง
 func Trim(v string) string {
 	return strings.TrimSpace(v)
+}
+
+// ฟังก์ชันหลักที่ใช้แปลงค่าเป็น string โดยเรียกใช้ฟังก์ชันรองที่รองรับ recursive pointer
+func ToStringReflect(value interface{}) string {
+	return toStringReflectWithSeen(value, make(map[uintptr]bool))
+
+	/*
+		Ex
+		ตัวอย่างค่าพื้นฐาน
+		fmt.Println(ToStringReflect(123))       // "123"
+		fmt.Println(ToStringReflect(3.14))      // "3.14"
+		fmt.Println(ToStringReflect(true))      // "true"
+		fmt.Println(ToStringReflect("Hello"))   // "Hello"
+
+		ตัวอย่าง slice
+		fmt.Println(ToStringReflect([]int{1, 2, 3})) // "[1, 2, 3]"
+
+		ตัวอย่าง map
+		m := map[string]int{"a": 1, "b": 2}
+		fmt.Println(ToStringReflect(m)) // "{a: 1, b: 2}"
+
+		ตัวอย่าง struct
+		p := Person{Name: "Alice", Age: 25}
+		fmt.Println(ToStringReflect(p)) // "{Name: Alice, Age: 25}"
+
+		ตัวอย่าง pointer
+		fmt.Println(ToStringReflect(&p)) // "{Name: Alice, Age: 25}"
+
+		ตัวอย่าง recursive pointer (self-referencing struct)
+		p2 := &Person{Name: "Bob", Age: 30}
+		p2.Friend = p2 // Friend ชี้กลับมาที่ตัวเอง
+		fmt.Println(ToStringReflect(p2)) // "{Name: Bob, Age: 30, Friend: RecursivePointer(0xc0000140c0)}"
+	*/
+
+}
+
+// ฟังก์ชันช่วยแปลงค่าเป็น string พร้อมตรวจจับ recursive pointer
+func toStringReflectWithSeen(value interface{}, seen map[uintptr]bool) string {
+	// เช็คกรณี value เป็น nil (กรณีอินพุตเป็น nil โดยตรง)
+	if value == nil {
+		return "nil"
+	}
+
+	// ใช้ reflect เพื่อดึงค่าของ value
+	v := reflect.ValueOf(value)
+
+	// กรณีที่เป็น pointer
+	if v.Kind() == reflect.Ptr {
+		ptr := v.Pointer() // ดึง address ของ pointer
+		if seen[ptr] {     // ถ้า pointer นี้เคยเจอแล้ว -> ป้องกันการวนลูปไม่รู้จบ
+			return fmt.Sprintf("RecursivePointer(%p)", value)
+		}
+		seen[ptr] = true                                           // บันทึก pointer นี้ว่าเคยเจอแล้ว
+		return toStringReflectWithSeen(v.Elem().Interface(), seen) // แปลงค่าที่ pointer ชี้ไป
+	}
+
+	// ตรวจสอบชนิดข้อมูล (Kind) และแปลงเป็น string ตามประเภทของ value
+	switch v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// แปลงค่าประเภท integer เป็น string
+		return strconv.FormatInt(v.Int(), 10)
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		// แปลงค่าประเภท unsigned integer เป็น string
+		return strconv.FormatUint(v.Uint(), 10)
+
+	case reflect.Float32, reflect.Float64:
+		// แปลงค่าประเภท float เป็น string
+		return strconv.FormatFloat(v.Float(), 'f', -1, 64)
+
+	case reflect.Bool:
+		// แปลงค่าประเภท boolean เป็น string ("true" หรือ "false")
+		return strconv.FormatBool(v.Bool())
+
+	case reflect.String:
+		// คืนค่า string โดยตรง
+		return v.String()
+
+	case reflect.Slice, reflect.Array:
+		// กรณีที่เป็น slice หรือ array -> วนลูปเก็บค่าแต่ละตัว
+		var elements []string
+		for i := 0; i < v.Len(); i++ {
+			elements = append(elements, toStringReflectWithSeen(v.Index(i).Interface(), seen))
+		}
+		// แปลงเป็นรูปแบบ [value1, value2, value3]
+		return fmt.Sprintf("[%s]", strings.Join(elements, ", "))
+
+	case reflect.Map:
+		// กรณีที่เป็น map -> วนลูปดึงค่า key และ value
+		keys := v.MapKeys()
+		var elements []string
+		for _, key := range keys {
+			elements = append(elements, fmt.Sprintf("%v: %v",
+				toStringReflectWithSeen(key.Interface(), seen),
+				toStringReflectWithSeen(v.MapIndex(key).Interface(), seen)))
+		}
+		// แปลงเป็นรูปแบบ {key1: value1, key2: value2}
+		return fmt.Sprintf("{%s}", strings.Join(elements, ", "))
+
+	case reflect.Struct:
+		// กรณีที่เป็น struct -> วนลูปดึงค่า field
+		var fields []string
+		for i := 0; i < v.NumField(); i++ {
+			fieldName := v.Type().Field(i).Name                                 // ชื่อ field
+			fieldValue := toStringReflectWithSeen(v.Field(i).Interface(), seen) // ค่า field
+			fields = append(fields, fmt.Sprintf("%s: %s", fieldName, fieldValue))
+		}
+		// แปลงเป็นรูปแบบ {Field1: Value1, Field2: Value2}
+		return fmt.Sprintf("{%s}", strings.Join(fields, ", "))
+
+	default:
+		// กรณีที่ไม่รองรับชนิดข้อมูลนี้
+		return fmt.Sprintf("Unsupported type: %s", v.Type())
+	}
 }
