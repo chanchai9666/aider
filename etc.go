@@ -537,6 +537,10 @@ func Trim(v string) string {
 }
 
 // ฟังก์ชันหลักที่ใช้แปลงค่าเป็น string โดยเรียกใช้ฟังก์ชันรองที่รองรับ recursive pointer
+// ✅ รองรับหลายชนิดข้อมูล
+// ✅ ป้องกัน recursive pointer
+// ✅ แสดงข้อมูลในรูปแบบที่อ่านง่าย
+// ✅ ใช้ reflect อย่างมีประสิทธิภาพ
 func ToStringReflect(value interface{}) string {
 	return toStringReflectWithSeen(value, make(map[uintptr]bool))
 
