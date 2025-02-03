@@ -315,6 +315,13 @@ func DateTimeToDateTime(datetime string) string {
 	}
 
 	return datetime
+	/*
+		ตัวอย่างการใช้งาน
+		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30Z"))       // ผลลัพธ์: 2025-02-03 10:15:30
+		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30+07:00"))  // ผลลัพธ์: 2025-02-03 10:15:30
+		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30z"))       // ผลลัพธ์: 2025-02-03 10:15:30
+		fmt.Println(DateTimeToDateTime("0001-01-01T00:00:00Z"))       // ผลลัพธ์: 0000-00-00 00:00:00
+	*/
 }
 
 func ConvertDateTime(dateTime, position string) string {
@@ -334,8 +341,18 @@ func ConvertDateTime(dateTime, position string) string {
 	} else {
 		return ""
 	}
+
+	/*
+		ตัวอย่างการใช้งาน
+		fmt.Println(ConvertDateTime("2025-02-03 10:15:30", "0"))       // ผลลัพธ์: 2025-02-03
+		fmt.Println(ConvertDateTime("2025-02-03 10:15:30", "1"))       // ผลลัพธ์: 2025-02-03 10:15:30
+		fmt.Println(ConvertDateTime("0001-01-01 00:00:00", "0"))       // ผลลัพธ์: 0000-00-00
+		fmt.Println(ConvertDateTime("2025-02-03", "0"))                // ผลลัพธ์: 2025-02-03
+	*/
+
 }
 
+// คำนวณจำนวนวันระหว่างวันที่สอง (ระหว่าง a และ b)
 func DaysBetween(a, b time.Time) int {
 
 	days := -a.YearDay()
@@ -345,6 +362,11 @@ func DaysBetween(a, b time.Time) int {
 	days += b.YearDay()
 
 	return days
+
+	/*
+		ตัวอย่างการใช้งาน
+		fmt.Println(DaysBetween(a, b)) // ผลลัพธ์: 757
+	*/
 }
 
 func Date(s string) time.Time {
@@ -352,6 +374,7 @@ func Date(s string) time.Time {
 	return d
 }
 
+// ตรวจสอบว่าเวลา check อยู่ในช่วงระหว่าง start และ end หรือไม่
 func InTimeSpan(start, end, check time.Time) bool {
 	return (check.After(start) && check.Before(end)) || (check.Equal(start) || check.Equal(end))
 }
