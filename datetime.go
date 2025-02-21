@@ -10,9 +10,14 @@ import (
 
 const (
 	languageTh     string = "th"
-	dateLayout     string = "2006-01-02"          // รูปแบบของวันที่ใน Go
+	dateLayout     string = "2006-01-02"          //รูปแบบของวันที่ใน Go
 	datetimeLayout string = "2006-01-02 15:04:05" //รูปแบบวันเวลาใน Go
 )
+
+var allowedLanguages = map[string]bool{
+	"en": true,
+	"th": true,
+}
 
 // LoadLocation returns The time zone.
 func loadLocation() *time.Location {
@@ -121,8 +126,13 @@ func TimeNowLocationTH() time.Time {
 	return time.Now().In(loadLocation())
 }
 
-// ShortDate short date
+// ShortDate short date time.Time To 21 Feb. 2025 OR 21 ก.พ. 2568
 func ShortDate(date time.Time, language string) string {
+	// ตรวจสอบว่า language ต้องเป็น "en" หรือ "th" เท่านั้น
+	if !allowedLanguages[language] {
+		return "invalid language"
+	}
+
 	datefmt := date.Format("02 Jan. 2006")
 	if language == "en" {
 		return datefmt
@@ -177,8 +187,8 @@ func getMonthThai(month time.Month) string {
 	}
 }
 
-// AddDatetime add date time only format 2006-01-02 15:04:05
-func AddDatetime(datetime string, year, month, day, hour, min, sec int) string {
+// ใช้สำหรับ บวก (เพิ่ม) หรือ ลบ (ลด) ค่าของ ปี, เดือน, วัน, ชั่วโมง, นาที และวินาที ไปยังวันที่ที่ระบุในรูปแบบของสตริง (datetime) และคืนค่าวันที่ที่ถูกปรับแล้วกลับมาในรูปแบบเดิม
+func ModifyDatetime(datetime string, year, month, day, hour, min, sec int) string {
 	layout := datetimeLayout
 	dt, _ := time.Parse(layout, datetime)
 	if dt.IsZero() {
@@ -197,32 +207,26 @@ func AddDatetime(datetime string, year, month, day, hour, min, sec int) string {
 	)
 
 	return dt.Format(layout)
-}
 
-// ReduceDatetime reduce re date time only format 2006-01-02 15:04:05
-func ReDatetime(datetime string, year, month, day, hour, min, sec int) string {
-	layout := datetimeLayout
-	dt, _ := time.Parse(layout, datetime)
-	if dt.IsZero() {
-		return ""
-	}
+	/*
+		EX
+		originalDate := "2025-02-21 14:30:00"
+		ทดสอบเพิ่ม 1 ปี, 2 เดือน, 3 วัน, 4 ชั่วโมง, 5 นาที, 6 วินาที
+		newDate := ModifyDatetime(originalDate, 1, 2, 3, 4, 5, 6)
 
-	dt = time.Date(
-		dt.Year()-year,
-		dt.Month()-time.Month(month),
-		dt.Day()-day,
-		dt.Hour()-hour,
-		dt.Minute()-min,
-		dt.Second()-sec,
-		0,
-		loadLocation(),
-	)
+		ลดลง 1 ปี, 2 เดือน, 3 วัน, 4 ชั่วโมง, 5 นาที, 6 วินาที
+		newDate := ModifyDatetime(originalDate, -1, -2, -3, -4, -5, -6)
 
-	return dt.Format(layout)
+		fmt.Println(ModifyDatetime("2025-02-21 14:30:00", 1, 2, 3, 4, 5, 6))  // +1 ปี +2 เดือน +3 วัน +4 ชั่วโมง +5 นาที +6 วินาที
+		fmt.Println(ModifyDatetime("2025-02-21 14:30:00", -1, -2, -3, -4, -5, -6)) // -1 ปี -2 เดือน -3 วัน -4 ชั่วโมง -5 นาที -6 วินาที
+	*/
 }
 
 // ShortYearMonth short month
 func ShortYearMonth(date time.Time, language string) string {
+	if !allowedLanguages[language] {
+		return "invalid language"
+	}
 	datefmt := date.Format("Jan. 2006")
 	if language == "en" {
 		return datefmt
@@ -234,7 +238,11 @@ func ShortYearMonth(date time.Time, language string) string {
 }
 
 // ShortYearMonth short month
+// time.Tim TO Feb. 2025 , กุมภาพันธ์ 2025
 func ShortMonth(date time.Time, language string) string {
+	if !allowedLanguages[language] {
+		return "invalid language"
+	}
 	datefmt := date.Format("Jan.")
 	if language == "en" {
 		return datefmt
@@ -245,6 +253,7 @@ func ShortMonth(date time.Time, language string) string {
 }
 
 // GetDate get date from string datetime format
+// time.Time TO Feb ,กุมภาพันธ์
 func GetDate(date string) string {
 	if date != "" {
 		s := strings.Split(date, "T")
@@ -258,6 +267,7 @@ func GetDate(date string) string {
 	return date
 }
 
+// time.Time คืนค่าเฉพาะเวลา
 func DateTimeToTime(datetime string) string {
 	if datetime != "" {
 		s := strings.Split(datetime, "T")
@@ -285,8 +295,8 @@ func DateTimeToTime(datetime string) string {
 	return datetime
 }
 
-// GetDate get date from string datetime format
-func DateTimeToDateTime(datetime string) string {
+// แปลง format วันที่ 2025-02-03T10:15:30Z TO 2025-02-03 10:15:3
+func FormatISOToDatetime(datetime string) string {
 	if datetime != "" {
 		s := strings.Split(datetime, "T")
 		if len(s) > 1 {
@@ -307,7 +317,6 @@ func DateTimeToDateTime(datetime string) string {
 			}
 			if len(split3) > 1 {
 				s[1] = split3[0]
-
 			}
 
 			datetime = date + " " + s[1]
@@ -316,45 +325,52 @@ func DateTimeToDateTime(datetime string) string {
 
 	return datetime
 	/*
-		ตัวอย่างการใช้งาน
-		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30Z"))       // ผลลัพธ์: 2025-02-03 10:15:30
-		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30+07:00"))  // ผลลัพธ์: 2025-02-03 10:15:30
-		fmt.Println(DateTimeToDateTime("2025-02-03T10:15:30z"))       // ผลลัพธ์: 2025-02-03 10:15:30
-		fmt.Println(DateTimeToDateTime("0001-01-01T00:00:00Z"))       // ผลลัพธ์: 0000-00-00 00:00:00
+		Ex.
+		fmt.Println(FormatISOToDatetime("2025-02-03T10:15:30Z"))       // "2025-02-03 10:15:30"
+		fmt.Println(FormatISOToDatetime("2025-02-03T10:15:30+07:00"))  // "2025-02-03 10:15:30"
+		fmt.Println(FormatISOToDatetime("2025-02-03T10:15:30z"))       // "2025-02-03 10:15:30"
+		fmt.Println(FormatISOToDatetime("0001-01-01T00:00:00Z"))       // "0000-00-00 00:00:00"
 	*/
 }
 
-func ConvertDateTime(dateTime, position string) string {
+// ดึงข้อมูล วันที่ตามตำแหน่งที่กำหนด
+func FormatDateTimeByPosition(dateTime, position string) string {
 	if dateTime != "" {
+		// แยกวันที่และเวลา
 		t := strings.Split(dateTime, " ")
-		if len(t) == 0 {
-			return dateTime
+
+		// ตรวจสอบว่า string มีวันที่และเวลาหรือไม่
+		if len(t) < 2 {
+			return dateTime // ถ้าไม่มีเวลาให้คืนค่าตามเดิม
 		}
+
+		// กรณีที่ตำแหน่งเป็น "0" คืนแค่วันที่
 		if position == "0" {
+			// ตรวจสอบหากเป็นวันที่ 0001-01-01 ให้แทนที่เป็น 0000-00-00
 			if t[0] == "0001-01-01" {
 				t[0] = "0000-00-00"
 			}
-			return t[0]
+			return t[0] // คืนแค่วันที่
 		} else {
+			// คืนค่าทั้งวันที่และเวลา
 			return t[0] + " " + t[1]
 		}
 	} else {
+		// ถ้าข้อมูลว่าง ให้คืนค่าว่าง
 		return ""
 	}
 
 	/*
-		ตัวอย่างการใช้งาน
-		fmt.Println(ConvertDateTime("2025-02-03 10:15:30", "0"))       // ผลลัพธ์: 2025-02-03
-		fmt.Println(ConvertDateTime("2025-02-03 10:15:30", "1"))       // ผลลัพธ์: 2025-02-03 10:15:30
-		fmt.Println(ConvertDateTime("0001-01-01 00:00:00", "0"))       // ผลลัพธ์: 0000-00-00
-		fmt.Println(ConvertDateTime("2025-02-03", "0"))                // ผลลัพธ์: 2025-02-03
+		Ex
+		fmt.Println(FormatDateTimeByPosition("2025-02-03 10:15:30", "0"))       // ผลลัพธ์: 2025-02-03
+		fmt.Println(FormatDateTimeByPosition("2025-02-03 10:15:30", "1"))       // ผลลัพธ์: 2025-02-03 10:15:30
+		fmt.Println(FormatDateTimeByPosition("0001-01-01 00:00:00", "0"))       // ผลลัพธ์: 0000-00-00
+		fmt.Println(FormatDateTimeByPosition("2025-02-03", "0"))                // ผลลัพธ์: 2025-02-03
 	*/
-
 }
 
 // คำนวณจำนวนวันระหว่างวันที่สอง (ระหว่าง a และ b)
 func DaysBetween(a, b time.Time) int {
-
 	days := -a.YearDay()
 	for year := a.Year(); year < b.Year(); year++ {
 		days += time.Date(year, time.December, 31, 0, 0, 0, 0, time.UTC).YearDay()
@@ -364,11 +380,16 @@ func DaysBetween(a, b time.Time) int {
 	return days
 
 	/*
-		ตัวอย่างการใช้งาน
+		Ex.
 		fmt.Println(DaysBetween(a, b)) // ผลลัพธ์: 757
 	*/
 }
 
+// Date แปลงสตริงที่มีรูปแบบตามที่กำหนดให้เป็นค่าเวลา (time.Time)
+// ฟังก์ชันนี้ใช้สำหรับการแปลงวันที่ในรูปแบบที่กำหนด (ตามตัวแปร `dateLayout`) ให้เป็นประเภท time.Time
+// ถ้าแปลงสำเร็จ จะคืนค่าผลลัพธ์เป็นเวลา
+// ในกรณีที่แปลงไม่สำเร็จ (เกิดข้อผิดพลาด) จะไม่คืนค่าผลลัพธ์ที่ถูกต้องเพราะเราละเว้นการจัดการข้อผิดพลาด
+// dateLayout คืนค่าเฉพาะวันที่
 func Date(s string) time.Time {
 	d, _ := time.Parse(dateLayout, s)
 	return d
@@ -379,6 +400,7 @@ func InTimeSpan(start, end, check time.Time) bool {
 	return (check.After(start) && check.Before(end)) || (check.Equal(start) || check.Equal(end))
 }
 
+// datetimeLayout คืนค่า วันที่และเวลา
 func DateTime(s string) time.Time {
 	d, _ := time.Parse(datetimeLayout, s)
 	return d

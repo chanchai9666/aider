@@ -2,6 +2,7 @@ package aider
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -118,12 +119,12 @@ func ToFloat64(value interface{}) float64 {
 	case string:
 		result, err := strconv.ParseFloat(v, 64)
 		if err != nil {
-			// fmt.Println("cannot convert %q to float64: %v", v, err)
+			fmt.Printf("cannot convert %q to float64: %v\n", v, err)
 			return 0
 		}
 		return result
 	default:
-		// fmt.Println("cannot convert %v of type %s to float64", value, reflect.TypeOf(value))
+		fmt.Printf("cannot convert %v of type %s to float64", value, reflect.TypeOf(value))
 		return 0
 	}
 }
