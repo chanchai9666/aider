@@ -349,7 +349,7 @@ func EncryptData(plaintext, key string) (string, error) {
 		return "", err
 	}
 
-	// สร้างตัว encryptor แบบ AES-GCM จาก cipher block
+	// สร้างตัว encryption แบบ AES-GCM จาก cipher block
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
@@ -459,18 +459,10 @@ func ToByte(value string) []byte {
 	return []byte(value)
 }
 
-// ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น string มี key ที่กำหนด หรือไม่
-func IssetMapKyeString[T comparable](entities map[string]T, k string) bool {
-	if _, ok := entities[k]; ok {
-		return true //มี key
-	}
-	return false
-}
-
-// ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น int มี key ที่กำหนด หรือไม่
-func IssetMapKyeInt[T comparable](entities map[int]T, k int) bool {
-	if _, ok := entities[k]; ok {
-		return true //มี key
+// ฟังก์ชันนี้ตรวจสอบว่า map ที่มี key เป็น int หรือ string มี key ที่กำหนด หรือไม่
+func HasKeyInMap[K comparable, T any](entities map[K]T, key K) bool {
+	if _, ok := entities[key]; ok {
+		return true // มี key
 	}
 	return false
 }
