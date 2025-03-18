@@ -11,6 +11,7 @@ import (
 const (
 	languageTh     string = "th"
 	dateLayout     string = "2006-01-02"          //รูปแบบของวันที่ใน Go
+	timeLayout     string = "15:04:05"            //รูปแบบของเวลาใน Go
 	datetimeLayout string = "2006-01-02 15:04:05" //รูปแบบวันเวลาใน Go
 )
 
@@ -27,64 +28,64 @@ func loadLocation() *time.Location {
 
 // FormatDate format date
 func FormatDate(dt *time.Time) (string, string) {
-	datefmt := dt.In(loadLocation()).Format("02 January 2006")
-	return dateFormat(datefmt, "en"), dateFormat(datefmt, "th")
+	dateFmt := dt.In(loadLocation()).Format("02 January 2006")
+	return dateFormat(dateFmt, "en"), dateFormat(dateFmt, "th")
 }
 
-func dateFormat(datefmt, language string) string {
+func dateFormat(dateFmt, language string) string {
 	if language == languageTh {
-		switch getMonth(datefmt) {
+		switch getMonth(dateFmt) {
 		case "January":
-			datefmt = strings.Replace(datefmt, "January", "มกราคม", 1)
+			dateFmt = strings.Replace(dateFmt, "January", "มกราคม", 1)
 
 		case "February":
-			datefmt = strings.Replace(datefmt, "February", "กุมภาพันธ์", 1)
+			dateFmt = strings.Replace(dateFmt, "February", "กุมภาพันธ์", 1)
 
 		case "March":
-			datefmt = strings.Replace(datefmt, "March", "มีนาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "March", "มีนาคม", 1)
 
 		case "April":
-			datefmt = strings.Replace(datefmt, "April", "เมษายน", 1)
+			dateFmt = strings.Replace(dateFmt, "April", "เมษายน", 1)
 
 		case "May":
-			datefmt = strings.Replace(datefmt, "May", "พฤษภาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "May", "พฤษภาคม", 1)
 
 		case "June":
-			datefmt = strings.Replace(datefmt, "June", "มิถุนายน", 1)
+			dateFmt = strings.Replace(dateFmt, "June", "มิถุนายน", 1)
 
 		case "July":
-			datefmt = strings.Replace(datefmt, "July", "กรกฎาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "July", "กรกฎาคม", 1)
 
 		case "August":
-			datefmt = strings.Replace(datefmt, "August", "สิงหาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "August", "สิงหาคม", 1)
 
 		case "September":
-			datefmt = strings.Replace(datefmt, "September", "กันยายน", 1)
+			dateFmt = strings.Replace(dateFmt, "September", "กันยายน", 1)
 
 		case "October":
-			datefmt = strings.Replace(datefmt, "October", "ตุลาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "October", "ตุลาคม", 1)
 
 		case "November":
-			datefmt = strings.Replace(datefmt, "November", "พฤศจิกายน", 1)
+			dateFmt = strings.Replace(dateFmt, "November", "พฤศจิกายน", 1)
 
 		case "December":
-			datefmt = strings.Replace(datefmt, "December", "ธันวาคม", 1)
+			dateFmt = strings.Replace(dateFmt, "December", "ธันวาคม", 1)
 		}
 	}
 
-	return fmt.Sprintf("%s %s %s", getDay(datefmt), getMonth(datefmt), getYear(datefmt, language))
+	return fmt.Sprintf("%s %s %s", getDay(dateFmt), getMonth(dateFmt), getYear(dateFmt, language))
 }
 
-func getDay(datefmt string) string {
-	return strings.Split(datefmt, " ")[0]
+func getDay(dateFmt string) string {
+	return strings.Split(dateFmt, " ")[0]
 }
 
-func getMonth(datefmt string) string {
-	return strings.Split(datefmt, " ")[1]
+func getMonth(dateFmt string) string {
+	return strings.Split(dateFmt, " ")[1]
 }
 
-func getYear(datefmt, language string) string {
-	year, _ := strconv.Atoi(strings.Split(datefmt, " ")[2])
+func getYear(dateFmt, language string) string {
+	year, _ := strconv.Atoi(strings.Split(dateFmt, " ")[2])
 	if language == languageTh {
 		return strconv.Itoa(year + 543)
 	}
@@ -133,14 +134,14 @@ func ShortDate(date time.Time, language string) string {
 		return "invalid language"
 	}
 
-	datefmt := date.Format("02 Jan. 2006")
+	dateFmt := date.Format("02 Jan. 2006")
 	if language == "en" {
-		return datefmt
+		return dateFmt
 	}
 
-	day := strings.Split(datefmt, " ")[0]
+	day := strings.Split(dateFmt, " ")[0]
 	month := getMonthThai(date.Month())
-	year := getYear(datefmt, language)
+	year := getYear(dateFmt, language)
 
 	rr := fmt.Sprintf("%s %s %s", day, month, year)
 	fmt.Println("====>", rr)
@@ -227,9 +228,9 @@ func ShortYearMonth(date time.Time, language string) string {
 	if !allowedLanguages[language] {
 		return "invalid language"
 	}
-	datefmt := date.Format("Jan. 2006")
+	dateFmt := date.Format("Jan. 2006")
 	if language == "en" {
-		return datefmt
+		return dateFmt
 	}
 	month := getMonthThai(date.Month())
 	year := date.Year()
@@ -243,9 +244,9 @@ func ShortMonth(date time.Time, language string) string {
 	if !allowedLanguages[language] {
 		return "invalid language"
 	}
-	datefmt := date.Format("Jan.")
+	dateFmt := date.Format("Jan.")
 	if language == "en" {
-		return datefmt
+		return dateFmt
 	}
 	month := getMonthThai(date.Month())
 
@@ -433,7 +434,7 @@ func CountDays(startDateStr, endDateStr string) (int, error) {
 // แปลงเดือนเป็นเดือนไทย
 func ToThaiMonth(month int) (string, error) {
 	if month < 1 || month > 12 {
-		return "", errors.New("Invalid month")
+		return "", errors.New("invalid month")
 	}
 
 	thaiMonths := []string{
@@ -484,15 +485,15 @@ func TimeNow() *TimeTime {
 
 // เมธอดสำหรับดึงเฉพาะวันที่
 func (d *TimeTime) DateOnly() string {
-	return d.time.Format("2006-01-02")
+	return d.time.Format(dateLayout)
 }
 
 // เมธอดสำหรับดึงเฉพาะเวลา
 func (d *TimeTime) TimeOnly() string {
-	return d.time.Format("15:04:05")
+	return d.time.Format(timeLayout)
 }
 
 // เมธอดสำหรับดึงวันเวลาเต็มรูปแบบ
 func (d *TimeTime) DateTime() string {
-	return d.time.Format("2006-01-02 15:04:05")
+	return d.time.Format(datetimeLayout)
 }
