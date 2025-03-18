@@ -446,15 +446,8 @@ func ToThaiMonth(month int) (string, error) {
 
 // วันเวลา ปัจจุบัน ประเทศไทย แบบ string
 func DateTimeNow() string {
-	// ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
-	// location, _ := time.LoadLocation("Asia/Bangkok")
-	// if err != nil {
-	// 	fmt.Println("ไม่สามารถโหลดโซนเวลาได้:", err)
-
-	// }
-
-	// location := time.FixedZone("Asia/Bangkok", 7*60*60) // 7 ชั่วโมง
-	location := loadLocation()
+	//location := time.FixedZone("Asia/Bangkok", 7*60*60) // 7 ชั่วโมง
+	location := loadLocation() //ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
 
 	// ใช้ Time Zone ที่กำหนด
 	currentTime := time.Now().In(location)
@@ -470,6 +463,36 @@ func TimeTimeNow() time.Time {
 	if err != nil {
 		return time.Time{}
 	}
-
 	return parsedTime
+}
+
+// Struct หลักที่เก็บเวลา
+type TimeTime struct {
+	time time.Time
+}
+
+// ฟังก์ชันหลักสำหรับดึงวันเวลาปัจจุบัน
+func TimeNow() *TimeTime {
+	dateFormat := datetimeLayout
+	tt := DateTimeNow()
+	parsedTime, err := time.Parse(dateFormat, tt)
+	if err != nil {
+		return &TimeTime{time.Time{}}
+	}
+	return &TimeTime{time: parsedTime}
+}
+
+// เมธอดสำหรับดึงเฉพาะวันที่
+func (d *TimeTime) DateOnly() string {
+	return d.time.Format("2006-01-02")
+}
+
+// เมธอดสำหรับดึงเฉพาะเวลา
+func (d *TimeTime) TimeOnly() string {
+	return d.time.Format("15:04:05")
+}
+
+// เมธอดสำหรับดึงวันเวลาเต็มรูปแบบ
+func (d *TimeTime) DateTime() string {
+	return d.time.Format("2006-01-02 15:04:05")
 }
