@@ -15,6 +15,11 @@ const (
 	datetimeLayout string = "2006-01-02 15:04:05" //รูปแบบวันเวลาใน Go
 )
 
+var thaiMonths = []string{
+	"ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+	"ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+}
+
 var allowedLanguages = map[string]bool{
 	"en": true,
 	"th": true,
@@ -148,44 +153,13 @@ func ShortDate(date time.Time, language string) string {
 	return rr
 }
 
+// ฟังก์ชันคืนค่าชื่อเดือนเป็นภาษาไทย
 func getMonthThai(month time.Month) string {
-	switch month {
-	case time.January:
-		return "ม.ค."
-
-	case time.February:
-		return "ก.พ."
-
-	case time.March:
-		return "มี.ค."
-
-	case time.April:
-		return "เม.ย."
-
-	case time.May:
-		return "พ.ค."
-
-	case time.June:
-		return "มิ.ย."
-
-	case time.July:
-		return "ก.ค."
-
-	case time.August:
-		return "ส.ค."
-
-	case time.September:
-		return "ก.ย."
-
-	case time.October:
-		return "ต.ค."
-
-	case time.November:
-		return "พ.ย."
-
-	default:
-		return "ธ.ค."
+	// time.Month มีค่าเริ่มต้นจาก 1 (January = 1) ดังนั้น index ต้องลบ 1
+	if month >= time.January && month <= time.December {
+		return thaiMonths[month-1]
 	}
+	return "" // คืนค่าว่างหากค่าเดือนผิดพลาด
 }
 
 // ใช้สำหรับ บวก (เพิ่ม) หรือ ลบ (ลด) ค่าของ ปี, เดือน, วัน, ชั่วโมง, นาที และวินาที ไปยังวันที่ที่ระบุในรูปแบบของสตริง (datetime) และคืนค่าวันที่ที่ถูกปรับแล้วกลับมาในรูปแบบเดิม
@@ -436,22 +410,14 @@ func ToThaiMonth(month int) (string, error) {
 	if month < 1 || month > 12 {
 		return "", errors.New("invalid month")
 	}
-
-	thaiMonths := []string{
-		"ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-		"ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
-	}
-
 	return thaiMonths[month-1], nil
 }
 
 // วันเวลา ปัจจุบัน ประเทศไทย แบบ string
 func DateTimeNow() string {
 	//location := time.FixedZone("Asia/Bangkok", 7*60*60) // 7 ชั่วโมง
-	location := loadLocation() //ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
-
-	// ใช้ Time Zone ที่กำหนด
-	currentTime := time.Now().In(location)
+	location := loadLocation()             //ตั้งโซนเวลาของประเทศไทย (Asia/Bangkok)
+	currentTime := time.Now().In(location) // ใช้ Time Zone ที่กำหนด
 	formattedTime := currentTime.Format(datetimeLayout)
 	return formattedTime
 }
