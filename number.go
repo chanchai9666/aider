@@ -128,3 +128,41 @@ func ToFloat64(value interface{}) float64 {
 		return 0
 	}
 }
+
+// แปลงค่าเป็น uint64
+func ToUint64(input interface{}) uint64 {
+	switch v := input.(type) {
+	case string:
+		num, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			fmt.Printf("cannot convert string to uint64: %v\n", err)
+			return 0
+		}
+		return num
+	case int:
+		if v < 0 {
+			fmt.Println("negative int cannot be converted to uint64")
+			return 0
+		}
+		return uint64(v)
+	case int64:
+		if v < 0 {
+			fmt.Println("negative int64 cannot be converted to uint64")
+			return 0
+		}
+		return uint64(v)
+	case float64:
+		if v < 0 {
+			fmt.Println("negative float64 cannot be converted to uint64")
+			return 0
+		}
+		return uint64(v)
+	case uint:
+		return uint64(v)
+	case uint64:
+		return v
+	default:
+		fmt.Printf("unsupported type %T for conversion to uint64\n", input)
+		return 0
+	}
+}
