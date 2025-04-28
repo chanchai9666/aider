@@ -20,6 +20,21 @@ var thaiMonths = []string{
 	"ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
 }
 
+var thaiMonthsMap = map[string]string{
+	"January":   "มกราคม",
+	"February":  "กุมภาพันธ์",
+	"March":     "มีนาคม",
+	"April":     "เมษายน",
+	"May":       "พฤษภาคม",
+	"June":      "มิถุนายน",
+	"July":      "กรกฎาคม",
+	"August":    "สิงหาคม",
+	"September": "กันยายน",
+	"October":   "ตุลาคม",
+	"November":  "พฤศจิกายน",
+	"December":  "ธันวาคม",
+}
+
 var allowedLanguages = map[string]bool{
 	"en": true,
 	"th": true,
@@ -39,45 +54,11 @@ func FormatDate(dt *time.Time) (string, string) {
 
 func dateFormat(dateFmt, language string) string {
 	if language == languageTh {
-		switch getMonth(dateFmt) {
-		case "January":
-			dateFmt = strings.Replace(dateFmt, "January", "มกราคม", 1)
-
-		case "February":
-			dateFmt = strings.Replace(dateFmt, "February", "กุมภาพันธ์", 1)
-
-		case "March":
-			dateFmt = strings.Replace(dateFmt, "March", "มีนาคม", 1)
-
-		case "April":
-			dateFmt = strings.Replace(dateFmt, "April", "เมษายน", 1)
-
-		case "May":
-			dateFmt = strings.Replace(dateFmt, "May", "พฤษภาคม", 1)
-
-		case "June":
-			dateFmt = strings.Replace(dateFmt, "June", "มิถุนายน", 1)
-
-		case "July":
-			dateFmt = strings.Replace(dateFmt, "July", "กรกฎาคม", 1)
-
-		case "August":
-			dateFmt = strings.Replace(dateFmt, "August", "สิงหาคม", 1)
-
-		case "September":
-			dateFmt = strings.Replace(dateFmt, "September", "กันยายน", 1)
-
-		case "October":
-			dateFmt = strings.Replace(dateFmt, "October", "ตุลาคม", 1)
-
-		case "November":
-			dateFmt = strings.Replace(dateFmt, "November", "พฤศจิกายน", 1)
-
-		case "December":
-			dateFmt = strings.Replace(dateFmt, "December", "ธันวาคม", 1)
+		month := getMonth(dateFmt)
+		if thaiMonth, ok := thaiMonthsMap[month]; ok {
+			dateFmt = strings.Replace(dateFmt, month, thaiMonth, 1)
 		}
 	}
-
 	return fmt.Sprintf("%s %s %s", getDay(dateFmt), getMonth(dateFmt), getYear(dateFmt, language))
 }
 
@@ -244,61 +225,43 @@ func GetDate(date string) string {
 
 // time.Time คืนค่าเฉพาะเวลา
 func DateTimeToTime(datetime string) string {
-	if datetime != "" {
-		s := strings.Split(datetime, "T")
-		if len(s) > 1 {
-
-			split1 := strings.Split(s[1], "Z")
-			split2 := strings.Split(s[1], "z")
-			split3 := strings.Split(s[1], "+07:00")
-
-			if len(split1) > 1 {
-				s[1] = split1[0]
-			}
-			if len(split2) > 1 {
-				s[1] = split2[0]
-			}
-			if len(split3) > 1 {
-				s[1] = split3[0]
-
-			}
-
-			datetime = s[1]
-		}
+	if datetime == "" {
+		return datetime
+	}
+	parts := strings.Split(datetime, "T")
+	if len(parts) <= 1 {
+		return datetime
 	}
 
-	return datetime
+	timeStr := parts[1]
+	for _, suffix := range []string{"Z", "z", "+07:00"} {
+		timeStr = strings.Split(timeStr, suffix)[0]
+	}
+
+	return timeStr
 }
 
 // แปลง format วันที่ 2025-02-03T10:15:30Z TO 2025-02-03 10:15:3
 func FormatISOToDatetime(datetime string) string {
-	if datetime != "" {
-		s := strings.Split(datetime, "T")
-		if len(s) > 1 {
-			date := s[0]
-			if date == "0001-01-01" {
-				date = "0000-00-00"
-			}
-
-			split1 := strings.Split(s[1], "Z")
-			split2 := strings.Split(s[1], "z")
-			split3 := strings.Split(s[1], "+07:00")
-
-			if len(split1) > 1 {
-				s[1] = split1[0]
-			}
-			if len(split2) > 1 {
-				s[1] = split2[0]
-			}
-			if len(split3) > 1 {
-				s[1] = split3[0]
-			}
-
-			datetime = date + " " + s[1]
-		}
+	if datetime == "" {
+		return datetime
+	}
+	parts := strings.Split(datetime, "T")
+	if len(parts) <= 1 {
+		return datetime
 	}
 
-	return datetime
+	date := parts[0]
+	if date == "0001-01-01" {
+		date = "0000-00-00"
+	}
+
+	timeStr := parts[1]
+	for _, suffix := range []string{"Z", "z", "+07:00"} {
+		timeStr = strings.Split(timeStr, suffix)[0]
+	}
+
+	return date + " " + timeStr
 	/*
 		Ex.
 		fmt.Println(FormatISOToDatetime("2025-02-03T10:15:30Z"))       // "2025-02-03 10:15:30"
@@ -346,14 +309,7 @@ func FormatDateTimeByPosition(dateTime, position string) string {
 
 // คำนวณจำนวนวันระหว่างวันที่สอง (ระหว่าง a และ b)
 func DaysBetween(a, b time.Time) int {
-	days := -a.YearDay()
-	for year := a.Year(); year < b.Year(); year++ {
-		days += time.Date(year, time.December, 31, 0, 0, 0, 0, time.UTC).YearDay()
-	}
-	days += b.YearDay()
-
-	return days
-
+	return int(b.Sub(a).Hours() / 24)
 	/*
 		Ex.
 		fmt.Println(DaysBetween(a, b)) // ผลลัพธ์: 757

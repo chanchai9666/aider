@@ -645,3 +645,116 @@ func toStringReflectWithSeen(value interface{}, seen map[uintptr]bool) string {
 		return fmt.Sprintf("Unsupported type: %s", v.Type())
 	}
 }
+
+// MapFromSlice สร้าง map จาก slice ของ struct โดยสามารถเลือกได้ว่าจะใช้ struct ทั้งก้อนเป็น value หรือเลือก field ที่ต้องการ
+// K comparable: ประเภทของ key ที่ต้องเป็น comparable
+// V any: ประเภทของ value
+// T any: ประเภทของ struct
+// items []T: slice ของ struct ที่ต้องการแปลง
+// keyFunc func(T) K: ฟังก์ชันที่ใช้ในการดึง key จาก struct
+// valueFunc func(T) V: ฟังก์ชันที่ใช้ในการดึง value จาก struct (ถ้าเป็น nil จะใช้ struct ทั้งก้อนเป็น value)
+
+func MapFromSlice[K comparable, V any, T any](items []T, keyFunc func(T) K, valueFunc func(T) V) map[K]V {
+	result := make(map[K]V)
+	for _, item := range items {
+		key := keyFunc(item)
+		var value V
+		if valueFunc != nil {
+			value = valueFunc(item)
+		} else {
+			// ถ้า valueFunc เป็น nil ให้ใช้ struct ทั้งก้อนเป็น value
+			value = any(item).(V)
+		}
+		result[key] = value
+	}
+	return result
+
+	/*
+		ตัวอย่างการใช้งาน:
+
+			type User struct {
+				ID       int
+				Name     string
+				Age      int
+				Email    string
+				IsActive bool
+			}
+
+			// ตัวอย่างข้อมูล
+			users := []User{
+				{ID: 1, Name: "John", Age: 30, Email: "john@example.com", IsActive: true},
+				{ID: 2, Name: "Jane", Age: 25, Email: "jane@example.com", IsActive: true},
+				{ID: 3, Name: "Bob", Age: 35, Email: "bob@example.com", IsActive: false},
+			}
+
+			1. ใช้ struct ทั้งก้อนเป็น value (เหมือน ToMap):
+				userMap := MapFromSlice(users, func(u User) int { return u.ID }, nil)
+				// ผลลัพธ์: map[int]User{
+				//   1: {ID: 1, Name: "John", Age: 30, Email: "john@example.com", IsActive: true},
+				//   2: {ID: 2, Name: "Jane", Age: 25, Email: "jane@example.com", IsActive: true},
+				//   3: {ID: 3, Name: "Bob", Age: 35, Email: "bob@example.com", IsActive: false},
+				// }
+
+			2. ใช้ field เฉพาะเป็น value (เหมือน CreateMap):
+				nameMap := MapFromSlice(users, func(u User) int { return u.ID }, func(u User) string { return u.Name })
+				// ผลลัพธ์: map[int]string{
+				//   1: "John",
+				//   2: "Jane",
+				//   3: "Bob",
+				// }
+
+			3. ใช้ field หลายๆ field เป็น value:
+				type UserInfo struct {
+					Name     string
+					Age      int
+					IsActive bool
+				}
+				infoMap := MapFromSlice(users, func(u User) int { return u.ID }, func(u User) UserInfo {
+					return UserInfo{Name: u.Name, Age: u.Age, IsActive: u.IsActive}
+				})
+				// ผลลัพธ์: map[int]UserInfo{
+				//   1: {Name: "John", Age: 30, IsActive: true},
+				//   2: {Name: "Jane", Age: 25, IsActive: true},
+				//   3: {Name: "Bob", Age: 35, IsActive: false},
+				// }
+
+			4. ใช้ key เป็น string:
+				emailMap := MapFromSlice(users, func(u User) string { return u.Email }, func(u User) int { return u.ID })
+				// ผลลัพธ์: map[string]int{
+				//   "john@example.com": 1,
+				//   "jane@example.com": 2,
+				//   "bob@example.com": 3,
+				// }
+
+			5. ใช้ key เป็นหลาย field:
+				type UserKey struct {
+					Name     string
+					IsActive bool
+				}
+				keyMap := MapFromSlice(users, func(u User) UserKey {
+					return UserKey{Name: u.Name, IsActive: u.IsActive}
+				}, func(u User) int { return u.Age })
+				// ผลลัพธ์: map[UserKey]int{
+				//   {Name: "John", IsActive: true}: 30,
+				//   {Name: "Jane", IsActive: true}: 25,
+				//   {Name: "Bob", IsActive: false}: 35,
+				// }
+	*/
+}
+
+// Ptr returns a pointer to the given value.
+//
+// This is useful when you want to pass a value to a function that requires a
+// pointer to that type. For example:
+//
+//	func foo(s *string) {
+//	    // do something with s
+//	}
+//
+//	s := "hello"
+//	foo(Ptr(s))
+//
+// แปลง value เป็น pointer
+func Ptr[T any](v T) *T {
+	return &v
+}
